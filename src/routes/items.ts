@@ -1,30 +1,20 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
+import { db } from '../db'
+import { items } from '../db/schema'
 
 export const itemsRoutes = new Hono()
 
-// In-memory store (replace with your DB later)
-type Item = { id: number; name: string; createdAt: string }
-let items: Item[] = [
-    { id: 1, name: 'Sample Item 1', createdAt: new Date().toISOString() },
-    { id: 2, name: 'Sample Item 2', createdAt: new Date().toISOString() },
-]
-let nextId = 3
-
 // GET /api/items
-itemsRoutes.get('/', (c) => {
-    return c.json({ data: items, total: items.length })
-})
-
-// GET /api/items/:id
-itemsRoutes.get('/:id', (c) => {
-    const id = Number(c.req.param('id'))
-    const item = items.find((i) => i.id === id)
-    if (!item) {
-        return c.json({ error: 'Item not found' }, 404)
+itemsRoutes.get('/', async (c) => {
+    try {
+        const allItems = await db.select().from(items)
+        return c.json({ data: allItems, total: allItems.length })
+    } catch (error) {
+        console.error('Error fetching items:', error)
+        return c.json({ error: 'Failed to fetch items' }, 500)
     }
-    return c.json({ data: item })
 })
 
 // POST /api/items
@@ -35,10 +25,16 @@ const createItemSchema = z.object({
 itemsRoutes.post(
     '/',
     zValidator('json', createItemSchema),
-    (c) => {
-        const { name } = c.req.valid('json')
-        const newItem: Item = { id: nextId++, name, createdAt: new Date().toISOString() }
-        items.push(newItem)
-        return c.json({ data: newItem }, 201)
+    async (c) => {
+        try {
+            const { name } = c.req.valid('json')
+
+            const [newItem] = await db.insert(items).values({ name }).returning()
+
+            return c.json({ data: newItem }, 201)
+        } catch (error) {
+            console.error('Error creating item:', error)
+            return c.json({ error: 'Failed to create item' }, 500)
+        }
     }
 )
