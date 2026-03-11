@@ -1,0 +1,25 @@
+{
+    "name": "hono-backend",
+    "version": "1.0.0",
+    "description": "Hono backend API for Railway deployment",
+    "private": true,
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js"
+    },
+    "dependencies": {
+        "@hono/node-server": "^1.13.7",
+        "@hono/zod-validator": "^0.4.3",
+        "hono": "^4.7.4",
+        "zod": "^3.24.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.10",
+        "tsx": "^4.19.3",
+        "typescript": "^5.8.2"
+    },
+    "engines": {
+        "node": ">=18"
+    }
+}
